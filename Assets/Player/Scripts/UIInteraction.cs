@@ -8,18 +8,18 @@ public class UIInteraction : MonoBehaviour
 
     GameManager gameManager;
 
+    int layerUI;
+
     // Use this for initialization
     void Start()
     {
         gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+        layerUI = LayerMask.GetMask("UI");
     }
 
     // Update is called once per frame
     void Update()
     {
-
-        int layerUI = LayerMask.GetMask("UI");
-
         RaycastHit hit;
         if (Physics.Raycast(transform.position, transform.forward, out hit, 100f, layerUI))
         {
