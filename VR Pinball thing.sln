@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.8
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VR Pinball thing", "VR Pinball thing.csproj", "{F0A6C251-A831-B147-7BB5-CB1515C91455}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VR Pinball thing.Editor", "VR Pinball thing.Editor.csproj", "{C1D07743-0661-56BC-A9E5-807D56B90A00}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F0A6C251-A831-B147-7BB5-CB1515C91455}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F0A6C251-A831-B147-7BB5-CB1515C91455}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F0A6C251-A831-B147-7BB5-CB1515C91455}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F0A6C251-A831-B147-7BB5-CB1515C91455}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1D07743-0661-56BC-A9E5-807D56B90A00}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1D07743-0661-56BC-A9E5-807D56B90A00}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1D07743-0661-56BC-A9E5-807D56B90A00}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1D07743-0661-56BC-A9E5-807D56B90A00}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5554E8C2-6CA9-4F0D-85EF-CDBA5F20EF42}
+	EndGlobalSection
+EndGlobal
