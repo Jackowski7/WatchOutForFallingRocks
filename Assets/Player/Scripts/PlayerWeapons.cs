@@ -4,137 +4,161 @@ using UnityEngine;
 
 public class PlayerWeapons : MonoBehaviour
 {
+	GameManager gameManager;
+	int enemyLayer;
 
-    public GameObject leftHand;
-    public Transform leftHandBarrelEnd;
-    public float leftHandFireRate;
-    public float leftHandDamage;
+	bool leftWeaponAlreadyFiring;
+	bool rightWeaponAlreadyFiring;
 
-    public GameObject rightHand;
-    public Transform rightHandBarrelEnd;
-    public float rightHandFireRate;
-    public float rightHandDamage;
+	public GameObject leftHand;
+	Transform leftHandBarrelEnd;
+	public float leftHandFireRate;
+	public float leftHandDamage;
+	public float leftHandKnockback;
+	public GameObject leftHandFlare;
+	public GameObject leftHandSpark;
 
-    GameManager gameManager;
-    int enemyLayer;
+	public GameObject rightHand;
+	Transform rightHandBarrelEnd;
+	public float rightHandFireRate;
+	public float rightHandDamage;
+	public float rightHandKnockback;
+	public GameObject rightHandFlare;
+	public GameObject rightHandSpark;
 
-    bool leftWeaponAlreadyFiring;
-    bool rightWeaponAlreadyFiring;
+	private void OnValidate()
+	{
+		leftHandFireRate = Mathf.Clamp(leftHandFireRate, 0, .95f);
+		rightHandFireRate = Mathf.Clamp(rightHandFireRate, 0, .95f);
+	}
 
-    ParticleSystem leftHandParticles;
-    ParticleSystem rightHandParticles;
-    public GameObject spark;
+	// Use this for initialization
+	void Start()
+	{
+		gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
+		enemyLayer = LayerMask.GetMask("Enemies");
+	}
 
-    private void OnValidate()
-    {
-        leftHandFireRate = Mathf.Clamp(leftHandFireRate, 0, .95f);
-        rightHandFireRate = Mathf.Clamp(rightHandFireRate, 0, .95f);
+	// Update is called once per frame
+	void Update()
+	{
 
-        leftHandParticles = leftHandBarrelEnd.GetComponent<ParticleSystem>();
-        rightHandParticles = rightHandBarrelEnd.GetComponent<ParticleSystem>();
-    }
+		if (gameManager.paused == false)
+		{
+			//fire left
+			if (Input.GetAxis("Fire1") > 0)
+			{
+				if (leftWeaponAlreadyFiring == false)
+				{
+					StartCoroutine(FireLeftWeapon());
+					leftWeaponAlreadyFiring = true;
+				}
+			}
 
-    // Use this for initialization
-    void Start()
-    {
-        gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
-        enemyLayer = LayerMask.GetMask("Enemies");
-    }
+			//fire right
+			if (Input.GetAxis("Fire2") > 0)
+			{
 
-    // Update is called once per frame
-    void Update()
-    {
+				if (rightWeaponAlreadyFiring == false)
+				{
+					StartCoroutine(FireRightWeapon());
+					rightWeaponAlreadyFiring = true;
+				}
 
-        if (gameManager.paused == false)
-        {
-            //fire left
-            if (Input.GetMouseButton(0) == true) //or left trigger is held)
-            {
-                if (Input.GetMouseButtonDown(0) == true) //yes im calling this again on purpose, else = controller trigger
-                {
-                    if (leftWeaponAlreadyFiring == false)
-                    {
-                        StartCoroutine(FireLeftWeapon());
-                        leftWeaponAlreadyFiring = true;
-                    }
-                }
-                else
-                {
-                    // instantiate from gun itself forward
-                }
+			}
 
+		}
+	}
 
-            }
+	IEnumerator FireLeftWeapon()
+	{
+		while (Input.GetAxis("Fire1") > 0 && gameManager.paused == false && gameManager.playerIsDead == false)
+		{
 
-            //fire right
-            if (Input.GetMouseButton(1) == true) //or left trigger is held)
-            {
-                if (Input.GetMouseButtonDown(1) == true) //yes im calling this again on purpose, else = controller trigger
-                {
-                    if (rightWeaponAlreadyFiring == false)
-                    {
-                        StartCoroutine(FireRightWeapon());
-                        rightWeaponAlreadyFiring = true;
-                    }
-                }
-                else
-                {
-                    // instantiate from gun itself forward
-                }
+			leftHandBarrelEnd = leftHand.transform.Find("Gun").Find("ModelCenter").Find("Model").Find("BarrelEnd").transform;
 
+			RaycastHit hit;
+			Transform rayOrgin;
 
-            }
-        }
+			if (gameManager.VRMode != true)
+			{
+				rayOrgin = transform.Find("NonVR").Find("Head").transform;
+			}
+			else
+			{
+				rayOrgin = leftHandBarrelEnd.transform;
+			}
 
-    }
+			if (Physics.Raycast(rayOrgin.position, rayOrgin.forward, out hit))
+			{
 
+				GameObject flare = Instantiate(leftHandFlare, leftHandBarrelEnd.position, Quaternion.Euler(leftHandBarrelEnd.forward));
+				Instantiate(leftHandSpark, hit.point, Quaternion.Euler(hit.normal));
 
-    IEnumerator FireLeftWeapon()
-    {
-        while (Input.GetMouseButton(0) == true && gameManager.paused == false && gameManager.playerIsDead == false)
-        {
-            RaycastHit hit;
-            if (Physics.Raycast(transform.position, transform.forward, out hit, 100f))
-            {
-                if (hit.transform.tag == "Enemy")
-                {
-                    hit.transform.gameObject.GetComponent<EnemyBehavior>().health -= leftHandDamage;
-                    Vector3 reflectVec = Vector3.Reflect(transform.forward, hit.normal);
-                    hit.transform.gameObject.GetComponent<Rigidbody>().AddForceAtPosition(-reflectVec * 100f, hit.point, ForceMode.Impulse);
-                }
+				flare.GetComponent<TrailRenderer>().AddPosition(leftHandBarrelEnd.position);
+				flare.GetComponent<TrailRenderer>().AddPosition(hit.point);
 
-                leftHandParticles.Play();
-                Instantiate(spark, hit.point, Quaternion.Euler(hit.normal));
-            }
-            yield return new WaitForSeconds(1f - leftHandFireRate);
+				float dmg = leftHandDamage * (1 - ((hit.distance - 17f) * .015f));
+				dmg = Mathf.Clamp(dmg, 0, 100f);
 
-        }
+				Debug.Log("Damage:" + dmg + " / Distance:" + hit.distance);
 
-        leftWeaponAlreadyFiring = false;
+				if (hit.transform.tag == "Enemy")
+				{
+					hit.transform.gameObject.GetComponent<EnemyBehavior>().health -= dmg;
+					hit.transform.gameObject.GetComponent<Rigidbody>().AddForceAtPosition(-hit.normal * 25 * leftHandKnockback, hit.point, ForceMode.Impulse);
+				}
+			}
+			yield return new WaitForSeconds(1f - leftHandFireRate);
 
-    }
+		}
 
-    IEnumerator FireRightWeapon()
-    {
-        while (Input.GetMouseButton(1) == true && gameManager.paused == false && gameManager.playerIsDead == false)
-        {
-            RaycastHit hit;
-            if (Physics.Raycast(transform.position, transform.forward, out hit, 100f))
-            {
-                if (hit.transform.tag == "Enemy")
-                {
-                    hit.transform.gameObject.GetComponent<EnemyBehavior>().health -= rightHandDamage;
-                    Vector3 reflectVec = Vector3.Reflect(transform.forward, -hit.normal);
-                    hit.transform.gameObject.GetComponent<Rigidbody>().AddForceAtPosition(-reflectVec * 100f, hit.point, ForceMode.Impulse);
-                }
+		leftWeaponAlreadyFiring = false;
 
-                rightHandParticles.Play();
-                Instantiate(spark, hit.point, Quaternion.Euler(hit.normal));
-            }
-            yield return new WaitForSeconds(1f - rightHandFireRate);
-        }
-        rightWeaponAlreadyFiring = false;
+	}
 
-    }
+	IEnumerator FireRightWeapon()
+	{
+		while (Input.GetAxis("Fire2") > 0 && gameManager.paused == false && gameManager.playerIsDead == false)
+		{
+
+			rightHandBarrelEnd = rightHand.transform.Find("Gun").Find("ModelCenter").Find("Model").Find("BarrelEnd").transform;
+
+			RaycastHit hit;
+			Transform rayOrgin;
+
+			if (gameManager.VRMode != true)
+			{
+				rayOrgin = transform.Find("NonVR").Find("Head").transform;
+			}
+			else
+			{
+				rayOrgin = rightHandBarrelEnd.transform;
+			}
+
+			if (Physics.Raycast(rayOrgin.position, rayOrgin.forward, out hit))
+			{
+
+				GameObject flare = Instantiate(rightHandFlare, rightHandBarrelEnd.position, Quaternion.Euler(rightHandBarrelEnd.forward));
+				Instantiate(rightHandSpark, hit.point, Quaternion.Euler(hit.normal));
+
+				flare.GetComponent<TrailRenderer>().AddPosition(rightHandBarrelEnd.position);
+				flare.GetComponent<TrailRenderer>().AddPosition(hit.point);
+
+				float dmg = leftHandDamage * (1 - ((hit.distance - 17f) * .015f));
+				dmg = Mathf.Clamp(dmg, 0, 100f);
+
+				if (hit.transform.tag == "Enemy")
+				{
+					hit.transform.gameObject.GetComponent<EnemyBehavior>().health -= rightHandDamage;
+					hit.transform.gameObject.GetComponent<Rigidbody>().AddForceAtPosition(-hit.normal * 25 * rightHandKnockback, hit.point, ForceMode.Impulse);
+				}
+
+			}
+			yield return new WaitForSeconds(1f - rightHandFireRate);
+		}
+		rightWeaponAlreadyFiring = false;
+
+	}
 
 }

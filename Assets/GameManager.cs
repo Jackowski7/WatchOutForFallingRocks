@@ -31,6 +31,8 @@ public class GameManager : MonoBehaviour
     public bool playerIsDead;
     public bool paused;
 
+    public bool VRMode;
+
     private void Awake()
     {
         spawner = GameObject.Find("Spawner").GetComponent<Spawner>();

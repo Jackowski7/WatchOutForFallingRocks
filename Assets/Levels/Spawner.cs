@@ -26,7 +26,7 @@ public class Spawner : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        spawnAmounts = new int[] { 4, 6, 8, 10, 4, 6, 8, 10, 4, 6, 8, 10, 4, 6, 8, 10 };
+        spawnAmounts = new int[] { 25, 1 };
         gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
     }
 
