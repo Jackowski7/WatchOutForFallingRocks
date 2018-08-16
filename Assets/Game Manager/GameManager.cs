@@ -5,10 +5,12 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-
-    int level;
-    public float score;
-    int lives;
+	[HideInInspector]
+	public int level;
+	[HideInInspector]
+	public float score;
+	[HideInInspector]
+	public int lives;
     [HideInInspector]
     public float health;
     float maxHealth = 1;
@@ -28,14 +30,24 @@ public class GameManager : MonoBehaviour
     public GameObject menuPlayerDied;
     public GameObject menuEndGame;
 
-    public bool playerIsDead;
-    public bool paused;
+	public bool skipMenu;
 
+	[HideInInspector]
+	public bool playerIsDead;
+	[HideInInspector]
+	public bool paused;
+
+	[HideInInspector]
     public bool VRMode;
+	VRToggle vrToggle;
 
     private void Awake()
     {
-        spawner = GameObject.Find("Spawner").GetComponent<Spawner>();
+
+		vrToggle = GetComponent<VRToggle>();
+		VRMode = vrToggle.VRMode;
+
+		spawner = GameObject.Find("Spawner").GetComponent<Spawner>();
         levelText = GameObject.Find("Level").transform.Find("Text").GetComponent<Text>();
         scoreText = GameObject.Find("Score").transform.Find("Text").GetComponent<Text>();
         livesText = GameObject.Find("Lives").transform.Find("Text").GetComponent<Text>();
@@ -51,9 +63,15 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        overlay.SetActive(true);
-        menuStartGame.SetActive(true);
-        paused = true;
+		if (skipMenu == true) {
+			StartLevel();
+		}
+		else
+		{
+			overlay.SetActive(true);
+			menuStartGame.SetActive(true);
+			paused = true;
+		}
     }
 
     private void Update()

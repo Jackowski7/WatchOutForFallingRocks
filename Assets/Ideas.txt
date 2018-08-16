@@ -1,0 +1,20 @@
+start out as semi-auto handguns
+buy ability for automatic fire > upgrade fire speed
+
+damage?
+knockback?
+
+
+
+// Gun Types / Characteristics / Stats
+Kinetic damage type:
+
+
+Laser: (fire)
++penetrating bullets by default
++no reload - recharges (cools) at a upgradable pace
+-no knockback
+
+// Rifle Mode
+when you snap your two one handguns together as if you're using a rifle, your guns animate and lock together, and morph into a new gun.
+a combination of the stats / characteristics of the two handguns?

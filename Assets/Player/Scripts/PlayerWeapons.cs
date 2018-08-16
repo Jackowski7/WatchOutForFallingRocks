@@ -11,32 +11,16 @@ public class PlayerWeapons : MonoBehaviour
 	bool rightWeaponAlreadyFiring;
 
 	public GameObject leftHand;
-	Transform leftHandBarrelEnd;
-	public float leftHandFireRate;
-	public float leftHandDamage;
-	public float leftHandKnockback;
-	public GameObject leftHandFlare;
-	public GameObject leftHandSpark;
-
 	public GameObject rightHand;
-	Transform rightHandBarrelEnd;
-	public float rightHandFireRate;
-	public float rightHandDamage;
-	public float rightHandKnockback;
-	public GameObject rightHandFlare;
-	public GameObject rightHandSpark;
 
-	private void OnValidate()
-	{
-		leftHandFireRate = Mathf.Clamp(leftHandFireRate, 0, .95f);
-		rightHandFireRate = Mathf.Clamp(rightHandFireRate, 0, .95f);
-	}
+	GameObject[] Weapons;
 
 	// Use this for initialization
 	void Start()
 	{
 		gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
 		enemyLayer = LayerMask.GetMask("Enemies");
+		Weapons = new GameObject[] { leftHand, rightHand };
 	}
 
 	// Update is called once per frame
@@ -46,22 +30,22 @@ public class PlayerWeapons : MonoBehaviour
 		if (gameManager.paused == false)
 		{
 			//fire left
-			if (Input.GetAxis("Fire1") > 0)
+			if (Input.GetAxis("Fire1") > 0 || SteamVR_Controller.Input(1).GetPressDown(SteamVR_Controller.ButtonMask.Trigger) == true)
 			{
 				if (leftWeaponAlreadyFiring == false)
 				{
-					StartCoroutine(FireLeftWeapon());
+					StartCoroutine(FireWeapon(0));
 					leftWeaponAlreadyFiring = true;
 				}
 			}
 
 			//fire right
-			if (Input.GetAxis("Fire2") > 0)
+			if (Input.GetAxis("Fire2") > 0 || SteamVR_Controller.Input(2).GetPressDown(SteamVR_Controller.ButtonMask.Trigger) == true)
 			{
 
 				if (rightWeaponAlreadyFiring == false)
 				{
-					StartCoroutine(FireRightWeapon());
+					StartCoroutine(FireWeapon(1));
 					rightWeaponAlreadyFiring = true;
 				}
 
@@ -70,12 +54,20 @@ public class PlayerWeapons : MonoBehaviour
 		}
 	}
 
-	IEnumerator FireLeftWeapon()
+	IEnumerator FireWeapon(int index)
 	{
-		while (Input.GetAxis("Fire1") > 0 && gameManager.paused == false && gameManager.playerIsDead == false)
-		{
 
-			leftHandBarrelEnd = leftHand.transform.Find("Gun").Find("ModelCenter").Find("Model").Find("BarrelEnd").transform;
+		string axisName = ("Fire" + (index + 1));
+
+		while ((Input.GetAxis(axisName) > 0 || SteamVR_Controller.Input(index + 1).GetHairTrigger() == true) && gameManager.paused == false && gameManager.playerIsDead == false)
+		{
+			Weapon weapon = Weapons[index].GetComponent<Weapon>();
+
+			Transform barrelEnd = Weapons[index].transform.Find("Gun").Find("ModelCenter").Find("Model").Find("BarrelEnd").transform;
+			float _damage = weapon.damage;
+			float knockback = weapon.knockback;
+			float fireRate = weapon.fireRate;
+			GameObject _flare = weapon.flare;
 
 			RaycastHit hit;
 			Transform rayOrgin;
@@ -86,78 +78,48 @@ public class PlayerWeapons : MonoBehaviour
 			}
 			else
 			{
-				rayOrgin = leftHandBarrelEnd.transform;
+				rayOrgin = barrelEnd.transform;
 			}
 
-			if (Physics.Raycast(rayOrgin.position, rayOrgin.forward, out hit))
+			if (Physics.Raycast(rayOrgin.position, rayOrgin.forward, out hit, 2000f))
 			{
 
-				GameObject flare = Instantiate(leftHandFlare, leftHandBarrelEnd.position, Quaternion.Euler(leftHandBarrelEnd.forward));
-				Instantiate(leftHandSpark, hit.point, Quaternion.Euler(hit.normal));
-
-				flare.GetComponent<TrailRenderer>().AddPosition(leftHandBarrelEnd.position);
+				GameObject flare = Instantiate(_flare, barrelEnd.position, Quaternion.Euler(barrelEnd.forward));
+				flare.GetComponent<TrailRenderer>().AddPosition(barrelEnd.position);
 				flare.GetComponent<TrailRenderer>().AddPosition(hit.point);
 
-				float dmg = leftHandDamage * (1 - ((hit.distance - 17f) * .015f));
-				dmg = Mathf.Clamp(dmg, 0, 100f);
+				float damage = _damage * (1 - ((hit.distance - 17f) * .015f));
+				damage = Mathf.Clamp(damage, 0, 100f);
 
-				Debug.Log("Damage:" + dmg + " / Distance:" + hit.distance);
+				SteamVR_Controller.Input(index + 1).TriggerHapticPulse(5000);
 
-				if (hit.transform.tag == "Enemy")
+				if (hit.transform.gameObject.GetComponent<EnemyBehavior>())
 				{
-					hit.transform.gameObject.GetComponent<EnemyBehavior>().health -= dmg;
-					hit.transform.gameObject.GetComponent<Rigidbody>().AddForceAtPosition(-hit.normal * 25 * leftHandKnockback, hit.point, ForceMode.Impulse);
+					hit.transform.gameObject.GetComponent<EnemyBehavior>().health -= damage;
 				}
-			}
-			yield return new WaitForSeconds(1f - leftHandFireRate);
+				if (hit.transform.gameObject.GetComponent<Rigidbody>())
+				{
+					hit.transform.gameObject.GetComponent<Rigidbody>().AddForceAtPosition(-hit.normal * 25 * knockback, hit.point, ForceMode.Impulse);
+				}
+				if (hit.transform.gameObject.GetComponent<Ricochet>() != null)
+				{
+					GameObject spark = hit.transform.gameObject.GetComponent<Ricochet>().spark;
+					yield return new WaitForSeconds(.03f);
+					Instantiate(spark, hit.point, Quaternion.Euler(hit.normal));
+				}
 
+			}
+			yield return new WaitForSeconds(1f - fireRate);
 		}
 
-		leftWeaponAlreadyFiring = false;
-
-	}
-
-	IEnumerator FireRightWeapon()
-	{
-		while (Input.GetAxis("Fire2") > 0 && gameManager.paused == false && gameManager.playerIsDead == false)
+		if (index == 1)
 		{
-
-			rightHandBarrelEnd = rightHand.transform.Find("Gun").Find("ModelCenter").Find("Model").Find("BarrelEnd").transform;
-
-			RaycastHit hit;
-			Transform rayOrgin;
-
-			if (gameManager.VRMode != true)
-			{
-				rayOrgin = transform.Find("NonVR").Find("Head").transform;
-			}
-			else
-			{
-				rayOrgin = rightHandBarrelEnd.transform;
-			}
-
-			if (Physics.Raycast(rayOrgin.position, rayOrgin.forward, out hit))
-			{
-
-				GameObject flare = Instantiate(rightHandFlare, rightHandBarrelEnd.position, Quaternion.Euler(rightHandBarrelEnd.forward));
-				Instantiate(rightHandSpark, hit.point, Quaternion.Euler(hit.normal));
-
-				flare.GetComponent<TrailRenderer>().AddPosition(rightHandBarrelEnd.position);
-				flare.GetComponent<TrailRenderer>().AddPosition(hit.point);
-
-				float dmg = leftHandDamage * (1 - ((hit.distance - 17f) * .015f));
-				dmg = Mathf.Clamp(dmg, 0, 100f);
-
-				if (hit.transform.tag == "Enemy")
-				{
-					hit.transform.gameObject.GetComponent<EnemyBehavior>().health -= rightHandDamage;
-					hit.transform.gameObject.GetComponent<Rigidbody>().AddForceAtPosition(-hit.normal * 25 * rightHandKnockback, hit.point, ForceMode.Impulse);
-				}
-
-			}
-			yield return new WaitForSeconds(1f - rightHandFireRate);
+			rightWeaponAlreadyFiring = false;
 		}
-		rightWeaponAlreadyFiring = false;
+		if (index == 0)
+		{
+			leftWeaponAlreadyFiring = false;
+		}
 
 	}
 

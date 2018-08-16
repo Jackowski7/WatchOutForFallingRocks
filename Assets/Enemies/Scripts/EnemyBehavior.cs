@@ -22,7 +22,7 @@ public class EnemyBehavior : MonoBehaviour {
     void Start () {
         gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
         spawner = GameObject.Find("Spawner").GetComponent<Spawner>();
-        healthSphere = transform.Find("HPSphere").gameObject;
+        healthSphere = transform.Find("HP").gameObject;
         maxHealth = health;
     }
 
